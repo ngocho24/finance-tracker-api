@@ -1,20 +1,23 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
-from datetime import datetime
+from flask import Flask
+from config import Config
+from app.models import db, bcrypt
+from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
 
-db = SQLAlchemy()
-bcrypt = Bcrypt()
+migrate = Migrate()
+jwt = JWTManager()
 
-class User(db.Model):
-    __tablename__ = 'users'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+# This MUST be named exactly 'create_app'
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
 
-    def set_password(self, password):
-        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+    db.init_app(app)
+    bcrypt.init_app(app)
+    jwt.init_app(app)
+    migrate.init_app(app, db)
 
-    def check_password(self, password):
-        return bcrypt.check_password_hash(self.password_hash, password)
+    from app.routes.auth import auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+
+    return app
