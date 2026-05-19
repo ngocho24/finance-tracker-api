@@ -18,6 +18,8 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
 
     from app.routes.auth import auth_bp
+    from app.routes.transactions import trans_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(trans_bp, url_prefix='/api/transactions')
 
     return app
